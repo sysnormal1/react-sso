@@ -1,0 +1,30 @@
+import { ReactNode } from 'react';
+import { FetchCoreResult } from '../http/fetchCore.js';
+import { PaletteMode } from '@mui/material';
+export type ResponseAdapter<T = unknown> = (raw: unknown, httpStatus: number) => FetchCoreResult<T>;
+export type SsoConfigParams = {
+    ssoProtocol?: 'http' | 'https';
+    ssoAddress?: string;
+    ssoPort?: number;
+    ssoUrl?: string;
+    ssoAuthEndpoint?: string;
+    ssoRefreshTokenEndpoint?: string;
+    ssoRegisterEndpoint?: string;
+    ssoRecordsEndpoint?: string;
+    ssoSystemsEndpoint?: string;
+    ssoAccessProfilesEndpoint?: string;
+    ssoAgentsXAccessProfilesXSystemsEndpoint?: string;
+    ssoResourcesEndpoint?: string;
+    ssoResourcePermissionsEndpoint?: string;
+    ssoGetAllowedResourcesEndpoint?: string;
+    ssoGetResourcePermissionsEndpoint?: string;
+    ssoThisSystemId?: number;
+    ssoResourceTypeScreenId?: number;
+    responseAdapter?: ResponseAdapter;
+    appLogo?: ReactNode;
+    appTitle?: string;
+    themeMode?: PaletteMode;
+};
+export declare function ssoConfig(params: SsoConfigParams): void;
+export declare function getSsoConfig(): Readonly<SsoConfigParams>;
+//# sourceMappingURL=SsoConfig.d.ts.map
