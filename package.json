@@ -1,5 +1,6 @@
 {
   "name": "@sysnormal/react-sso",
+  "package": "@sysnormal/react-sso",
   "version": "1.0.0",
   "author": "aalencarvz@gmail.com",
   "license": "ISC",
