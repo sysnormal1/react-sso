@@ -8,6 +8,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6)
 ![MUI](https://img.shields.io/badge/MUI-Material%20UI-007FFF)
 
+![AI Assisted](https://img.shields.io/badge/AI-Assisted-blue)
+
+
 **@sysnormal/react-sso** is a React library that provides a complete authentication integration with the [Sysnormal SSO Server](https://github.com/sysnormal1/sysnormal-spring-boot-starter-sso). It manages tokens, session state, default auth screens, social login, and secure HTTP requests — all with minimal setup.
 
 Designed to work standalone or alongside [@sysnormal/react-drawer-layout](https://github.com/sysnormal1/react-drawer-layout).
@@ -182,6 +185,26 @@ Token, refresh token, and logout-on-expiry are injected automatically — no nee
 
 ---
 
+### `secureFetch`
+
+Makes authenticated HTTP requests with automatic token injection and refresh. Use inside and outside React components:
+
+```tsx
+import { secureFetch } from '@sysnormal/react-sso';
+
+function MyComponent() {
+
+  const loadData = async () => {
+    const result = await secureFetch({
+      url: 'https://my-api.com/data',
+      method: 'GET',
+    });
+    console.log(result.data);
+  };
+}
+```
+---
+
 ### `useGetAllowedResources`
 
 Fetches the resources the logged-in agent is allowed to access:
@@ -238,52 +261,6 @@ function MyScreen() {
 
 ---
 
-### `useTopBar` (for use with `@sysnormal/react-drawer-layout`)
-
-Sets the top bar title and extra content dynamically from any screen:
-
-```tsx
-import { useTopBar } from '@sysnormal/react-sso';
-
-function DashboardScreen() {
-  const { setTopBarTitle, setTopBarChildren } = useTopBar();
-
-  useEffect(() => {
-    setTopBarTitle('Dashboard');
-    setTopBarChildren(<Button>New item</Button>);
-  }, []);
-
-  return <div>...</div>;
-}
-```
-
-Title and children are automatically cleared when the component unmounts.
-
----
-
-## 🔧 `secureFetchAuth` — for controllers and non-component files
-
-When you need to make authenticated requests outside React components (`.ts` controllers, utilities, etc.):
-
-```ts
-import { secureFetchAuth } from '@sysnormal/react-sso';
-
-async function deleteRecord(params: any) {
-  const result = await secureFetchAuth({
-    url: params.url,
-    method: 'DELETE',
-    body: { identifiers: params.ids },
-  });
-
-  if (result.success) {
-    console.log('Deleted successfully');
-  }
-}
-```
-
-This reads the current token from an internal store kept in sync by `AuthProvider`. It does **not** require a hook call.
-
----
 
 ## 🖥️ Default Auth Screens
 
@@ -488,3 +465,7 @@ GitHub: [@aalencarvz1](https://github.com/aalencarvz1)
 GitHub: [@sysnormal1](https://github.com/sysnormal1)
 
 ---
+
+## Acknowledgements
+
+Parts of this project were developed with the assistance of AI-based tools for code generation, review and documentation.
