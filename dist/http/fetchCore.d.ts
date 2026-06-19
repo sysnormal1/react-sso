@@ -13,6 +13,8 @@ export type FetchCoreParams<T = unknown> = {
     body?: unknown;
     headers?: Record<string, string>;
     responseAdapter?: ResponseAdapter<T>;
+    useLargeJsonParser?: boolean;
 };
+export declare function largeJsonParse(stringBuffer?: any): any;
 export declare function fetchCore<T = unknown>(params: FetchCoreParams<T>): Promise<FetchCoreResult<T>>;
 //# sourceMappingURL=fetchCore.d.ts.map
