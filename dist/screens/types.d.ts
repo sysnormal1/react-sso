@@ -20,7 +20,6 @@ export type AuthScreenProps = {
     ssoUrl?: string;
     onSuccess?: (token: string, refreshToken: string, agent?: unknown) => void;
     onError?: (message: string) => void;
-    t?: (key: string) => string;
 };
 export type LoginScreenProps = AuthScreenProps & {
     socialLogins?: SocialLoginConfig[];

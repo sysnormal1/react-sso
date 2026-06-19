@@ -10,9 +10,9 @@ export type UseSocialLoginCallbackResult = {
   error: string | null;
 };
 
-export function useSocialLoginCallback(
-  ssoUrl?: string
-): UseSocialLoginCallbackResult {
+// src/hooks/useSocialLoginCallback.ts
+
+export function useSocialLoginCallback(ssoUrl?: string): UseSocialLoginCallbackResult {
   const { login } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function useSocialLoginCallback(
         const redirectUri = sessionStorage.getItem('sso_social_redirect_uri');
 
         if (!code || !provider || !redirectUri) {
-          setError('Parâmetros de callback inválidos.');
+          setError('error.invalidParameters');
           return;
         }
 
@@ -42,8 +42,13 @@ export function useSocialLoginCallback(
           sessionStorage.removeItem('sso_social_provider');
           sessionStorage.removeItem('sso_social_redirect_uri');
           login(result.data.token, result.data.refreshToken, result.data.agent);
+
+          // mesmo tratamento do login normal — sai de qualquer rota de auth
+          if (window.location.pathname.startsWith('/auth/')) {
+            window.location.replace('/');
+          }
         } else {
-          setError(result.message ?? 'Falha no login social.');
+          setError(result.message ?? 'error.socialSignFail');
         }
       } finally {
         setLoading(false);

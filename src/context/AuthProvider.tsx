@@ -13,6 +13,7 @@ import { RegisterScreen } from '../screens/RegisterScreen.js';
 import { RecoverScreen } from '../screens/RecoverScreen.js';
 import { createTheme, PaletteMode, Theme } from '@mui/material';
 import { SocialLoginConfig } from '../screens/types.js';
+import { setAuthSnapshot } from './AuthStore.js';
 
 
 export type StorageType = 'localStorage' | 'sessionStorage' | 'none';
@@ -142,7 +143,7 @@ export function AuthProvider<TAgent = unknown>({
     setAgent(null);
   }, [setToken, setRefreshToken, setAgent]);
 
-  // callback estável para o secureFetch atualizar tokens sem acessar React
+  // callback estável para o secureFetchCore atualizar tokens sem acessar React
   const onTokenRefreshed = useCallback((
     newToken: string,
     newRefreshToken: string
@@ -150,6 +151,11 @@ export function AuthProvider<TAgent = unknown>({
     setToken(newToken);
     setRefreshToken(newRefreshToken);
   }, [setToken, setRefreshToken]);
+
+  // dentro do componente, após declarar token, refreshToken, onTokenRefreshed, logout
+  useEffect(() => {
+    setAuthSnapshot({ token, refreshToken, onTokenRefreshed, logout });
+  }, [token, refreshToken, onTokenRefreshed, logout]);
 
   const value: AuthContextValue<TAgent> = useMemo(() => ({
     logged,
@@ -173,30 +179,30 @@ export function AuthProvider<TAgent = unknown>({
   const isRecover = currentPath.startsWith(recoverPath);
 
   const renderContent = (): ReactNode => {
-  if (logged || isPublic) return children;
-  if (isRegister && registerPage) return registerPage;
-  if (isRegister) return <RegisterScreen 
-    loginPath={loginPath} 
-    logo={appLogo}
-    title={appTitle}
-    theme={appTheme}
-    socialLogins={socialLogins}
-  />;
-  if (isRecover && recoverPage) return recoverPage;
-  if (isRecover) return <RecoverScreen 
-    loginPath={loginPath} 
-    logo={appLogo}
-    title={appTitle}
-    theme={appTheme}
-  />;
-  return loginPage ?? <LoginScreen 
-    registerPath={registerPath} 
-    recoverPath={recoverPath} 
-    logo={appLogo}
-    title={appTitle}
-    theme={appTheme}
-    socialLogins={socialLogins}
-  />;
+    if (logged || isPublic) return children;
+    if (isRegister && registerPage) return registerPage;
+    if (isRegister) return <RegisterScreen 
+      loginPath={loginPath} 
+      logo={appLogo}
+      title={appTitle}
+      theme={appTheme}
+      socialLogins={socialLogins}
+    />;
+    if (isRecover && recoverPage) return recoverPage;
+    if (isRecover) return <RecoverScreen 
+      loginPath={loginPath} 
+      logo={appLogo}
+      title={appTitle}
+      theme={appTheme}
+    />;
+    return loginPage ?? <LoginScreen 
+      registerPath={registerPath} 
+      recoverPath={recoverPath} 
+      logo={appLogo}
+      title={appTitle}
+      theme={appTheme}
+      socialLogins={socialLogins}
+    />;
 };
 
   return (

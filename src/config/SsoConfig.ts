@@ -36,6 +36,8 @@ export type SsoConfigParams = {
   appLogo?: ReactNode;
   appTitle?: string;
   themeMode?: PaletteMode;
+
+  translater?: (text: string, options?: any) => string;
 };
 
 const defaults: SsoConfigParams = {
@@ -59,6 +61,7 @@ const defaults: SsoConfigParams = {
   ssoThisSystemId: undefined,
   ssoResourceTypeScreenId: 10,
   responseAdapter: undefined, // usa comportamento padrão do fetchCore
+  translater: undefined,
 };
 
 let current: SsoConfigParams = { ...defaults };

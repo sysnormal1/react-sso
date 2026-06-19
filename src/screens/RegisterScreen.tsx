@@ -1,6 +1,6 @@
 // src/screens/RegisterScreen.tsx
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Alert,
   Box,
@@ -17,8 +17,8 @@ import { fetchCore } from '../http/fetchCore.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 import { RegisterScreenProps, SocialLoginConfig } from './types.js';
 import { getSocialLoginUrl } from '../sso/authService.js';
+import { getInitialThemeMode } from '../utils/themeUtils.js';
 
-const defaultTheme = createTheme();
 
 const defaultTexts: Record<string, string> = {
     'register.title': 'Login',
@@ -34,22 +34,24 @@ const defaultTexts: Record<string, string> = {
     'register.already_account': 'Do you already have an account?',
     'register.socialWith': 'Sign in with',
     'register.success': 'Registration successful!',
+    'register.passowrdsNotMath': 'Passowords not math',
     'error.fillAllFields': 'Please fill in all fields.',
     'error.registerFailed': 'Registration failed.',
-    'error.getSocialUrlFail': 'Failed to retrieve social login URL.'
+    'error.getSocialUrlFail': 'Failed to retrieve social login URL.',
+    "error.invalidParameters": "invalid parameters",
+    "error.socialSignFail": "Fail on social login",
 };
 
 export function RegisterScreen({
   logo,
-  title = 'Cadastro',
-  theme = defaultTheme,
+  title,
+  theme: clientTheme,
   slots,
   ssoUrl,
   loginPath = '/auth/login',
   socialLogins = [],
   onSuccess,
-  onError,
-  t
+  onError
 }: RegisterScreenProps) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -59,16 +61,32 @@ export function RegisterScreen({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const config = getSsoConfig();
+  // detecta tema inicial e reage a mudanças do sistema em tempo real
+    const [detectedMode, setDetectedMode] = useState(getInitialThemeMode);
 
-  const translate = t ?? ((key: string) => defaultTexts[key] ?? key);
+  const translate = config.translater ?? ((key: string) => defaultTexts[key] ?? key);
 
   const resolvedLogo = logo ?? config.appLogo;
-    const resolvedTitle = title ?? config.appTitle ?? translate('recover.title');
-    const resolvedTheme = theme ?? (
-        config.themeMode
-        ? createTheme({ palette: { mode: config.themeMode } })
-        : defaultTheme
-    );
+  const resolvedTitle = title ?? config.appTitle ?? translate('register.title');
+  const resolvedTheme = clientTheme ?? (
+    config.themeMode
+      ? createTheme({ palette: { mode: config.themeMode } })
+      : createTheme({ palette: { mode: detectedMode } })
+  );
+
+  useEffect(() => {
+    // só escuta se não há tema externo nem config forçando um modo
+    if (clientTheme || config.themeMode) return;
+
+    const stored = localStorage?.getItem('drawerLayoutTheme');
+    if (stored) return; // usuário já escolheu manualmente
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setDetectedMode(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [clientTheme, config.themeMode]);
+  
 
   const handleError = useCallback((message: string) => {
     setError(message);
@@ -78,11 +96,11 @@ export function RegisterScreen({
 
   const handleSubmit = useCallback(async () => {
     if (!identifier || !password || !confirm) {
-      handleError('Preencha todos os campos.');
+      handleError(translate('error.fillAllFields'));
       return;
     }
     if (password !== confirm) {
-      handleError('As senhas não coincidem.');
+      handleError(translate('register.passowrdsNotMath'));
       return;
     }
     setLoading(true);
@@ -99,7 +117,7 @@ export function RegisterScreen({
         setSuccess(true);
         onSuccess?.(result.data as any, '', undefined);
       } else {
-        handleError(result.message ?? 'Falha no cadastro.');
+        handleError(result.message ?? 'error.registerFailed');
       }
     } finally {
       setLoading(false);
@@ -119,7 +137,7 @@ export function RegisterScreen({
           url: ssoUrl ?? config.ssoUrl,
         });
   
-        if (!urlResult.success || !urlResult.data?.url) {
+        if (!urlResult.success || !urlResult.data) {
           handleError(urlResult.message ?? translate('error.getSocialUrlFail'));
           return;
         }
@@ -129,7 +147,7 @@ export function RegisterScreen({
         sessionStorage.setItem('sso_social_redirect_uri', social.redirectUri);
   
         // passo 3: redirecionar
-        window.location.href = urlResult.data.url;
+        window.location.href = urlResult.data;
       } finally {
         setSocialLoading(null);
       }
@@ -163,13 +181,13 @@ export function RegisterScreen({
           {slots?.header ?? (
             <Box sx={{ textAlign: 'center', mb: 1 }}>
               {resolvedLogo && <Box sx={{ mb: 1 }}>{resolvedLogo}</Box>}
-              <Typography variant="h5" sx={{fontWeight:"bold"}}>
+              <Typography variant="h5" sx={{fontWeight:"bold", color: resolvedTheme.palette.text.primary}}>
                 {resolvedTitle}
               </Typography>
             </Box>
           )}
 
-          {error && <Alert severity="error">{error}</Alert>}
+          {error && <Alert severity="error">{translate(error)}</Alert>}
 
           {success ? (
             <Alert severity="success">
@@ -220,7 +238,7 @@ export function RegisterScreen({
               {/* social logins — só renderiza se configurado */}
                 {socialLogins && socialLogins.length > 0 && (
                     <>
-                    <Divider>{translate('register.orWith')}</Divider>
+                    <Divider sx={{color: resolvedTheme.palette.text.primary}}>{translate('register.orWith')}</Divider>
                     {socialLogins.map(social => (
                         <Button
                         key={social.provider}
@@ -240,7 +258,7 @@ export function RegisterScreen({
                     </>
                 )}
 
-              <Typography variant="body2" sx={{textAlign: "center"}}>
+              <Typography variant="body2" sx={{textAlign: "center", color: resolvedTheme.palette.text.primary}}>
                 {translate('register.already_account')}{' '}
                 <Link href={loginPath}>{translate('register.login')}</Link>
               </Typography>

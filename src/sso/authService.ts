@@ -91,12 +91,12 @@ export type HandleSocialCodeParams = {
 
 export async function getSocialLoginUrl(
   params: GetSocialLoginUrlParams
-): Promise<FetchCoreResult<{ url: string }>> {
+): Promise<FetchCoreResult<string>> {
   const config = getSsoConfig();
   const base = params.url ?? config.ssoUrl ?? '';
   const endpoint = `/auth/${params.provider}/get_login_url`;
   const responseAdapter = (params.responseAdapter ?? config.responseAdapter) as
-    | ResponseAdapter<{ url: string }>
+    | ResponseAdapter<string>
     | undefined;
 
   return await fetchCore({

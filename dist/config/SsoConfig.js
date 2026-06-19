@@ -17,6 +17,7 @@ const defaults = {
     ssoThisSystemId: undefined,
     ssoResourceTypeScreenId: 10,
     responseAdapter: undefined, // usa comportamento padrão do fetchCore
+    translater: undefined,
 };
 let current = { ...defaults };
 export function ssoConfig(params) {

@@ -12,7 +12,7 @@ export async function fetchCore(params) {
     const response = await fetch(url, {
         method,
         headers,
-        body: body !== undefined ? JSON.stringify(body) : undefined,
+        body: body !== undefined ? (typeof body === "object" ? JSON.stringify(body) : body) : undefined,
     });
     const raw = await response.json();
     if (responseAdapter) {

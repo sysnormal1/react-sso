@@ -1,6 +1,6 @@
 // src/screens/LoginScreen.tsx
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -13,15 +13,16 @@ import {
   ThemeProvider,
   Typography,
   createTheme,
-  Alert,
+  Alert
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext.js';
 import { login, getSocialLoginUrl, handleSocialCode } from '../sso/authService.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 import { LoginScreenProps, SocialLoginConfig } from './types.js';
+import { getInitialThemeMode } from '../utils/themeUtils.js';
 
-const defaultTheme = createTheme();
+
 
 const defaultTexts: Record<string, string> = {
     'login.title': 'Login',
@@ -35,20 +36,22 @@ const defaultTexts: Record<string, string> = {
     'login.socialWith': 'Sign in with',
     'error.fillAllFields': 'Please fill in all fields.',
     'error.authFailed': 'Authentication failed.',
+    'error.getSocialUrlFail': 'Failed to retrieve social login URL',
+    "error.invalidParameters": "invalid parameters",
+    "error.socialSignFail": "Fail on social login"
 };
 
 export function LoginScreen({
   logo,
-  title = 'Login',
-  theme = defaultTheme,
+  title,
+  theme: clientTheme,
   slots,
   ssoUrl,
   socialLogins,
   registerPath = '/auth/register',
   recoverPath = '/auth/recover',
   onSuccess,
-  onError,
-  t
+  onError
 }: LoginScreenProps) {
   const { login: authLogin } = useAuth();
 
@@ -59,6 +62,23 @@ export function LoginScreen({
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const config = getSsoConfig();
+
+  // detecta tema inicial e reage a mudanças do sistema em tempo real
+  const [detectedMode, setDetectedMode] = useState(getInitialThemeMode);
+
+  useEffect(() => {
+    // só escuta se não há tema externo nem config forçando um modo
+    if (clientTheme || config.themeMode) return;
+
+    const stored = localStorage?.getItem('drawerLayoutTheme');
+    if (stored) return; // usuário já escolheu manualmente
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setDetectedMode(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [clientTheme, config.themeMode]);
+
   const handleError = useCallback((message: string) => {
     setError(message);
     onError?.(message);
@@ -80,8 +100,14 @@ export function LoginScreen({
       if (result.success && result.data?.token) {
         authLogin(result.data.token, result.data.refreshToken, result.data.agent);
         onSuccess?.(result.data.token, result.data.refreshToken, result.data.agent);
+
+        // se estava numa rota de auth, volta para a raiz após login
+        if (typeof window !== 'undefined' &&
+          window.location.pathname.startsWith('/auth/')) {
+          window.location.replace('/');
+        }
       } else {
-        handleError(result.message ?? 'Falha na autenticação.');
+        handleError(result.message ?? 'error.authFailed');
       }
     } finally {
       setLoading(false);
@@ -90,16 +116,16 @@ export function LoginScreen({
 
   
 
-  const translate = t ?? ((key: string) => defaultTexts[key] ?? key);
+  const translate = config.translater ?? ((key: string) => defaultTexts[key] ?? key);
 
     
 
   const resolvedLogo = logo ?? config.appLogo;
   const resolvedTitle = title ?? config.appTitle ?? translate('login.title');
-  const resolvedTheme = theme ?? (
+  const resolvedTheme = clientTheme ?? (
     config.themeMode
       ? createTheme({ palette: { mode: config.themeMode } })
-      : defaultTheme
+      : createTheme({ palette: { mode: detectedMode } })
   );
 
 
@@ -116,8 +142,8 @@ export function LoginScreen({
         url: ssoUrl ?? config.ssoUrl,
       });
 
-      if (!urlResult.success || !urlResult.data?.url) {
-        handleError(urlResult.message ?? 'Falha ao obter URL de login social.');
+      if (!urlResult.success || !urlResult.data) {
+        handleError(urlResult.message ?? 'error.getSocialUrlFail');
         return;
       }
 
@@ -126,7 +152,7 @@ export function LoginScreen({
       sessionStorage.setItem('sso_social_redirect_uri', social.redirectUri);
 
       // passo 3: redirecionar
-      window.location.href = urlResult.data.url;
+      window.location.href = urlResult.data ;
     } finally {
       setSocialLoading(null);
     }
@@ -161,7 +187,7 @@ export function LoginScreen({
           {slots?.header ?? (
             <Box sx={{ textAlign: 'center', mb: 1 }}>
               {resolvedLogo && <Box sx={{ mb: 1 }}>{resolvedLogo}</Box>}
-              <Typography variant="h5" sx={{fontWeight: "bold"}}>
+              <Typography variant="h5" sx={{fontWeight: "bold", color: resolvedTheme.palette.text.primary}}>
                 {resolvedTitle}
               </Typography>
             </Box>
@@ -221,7 +247,7 @@ export function LoginScreen({
           {/* social logins — só renderiza se configurado */}
           {socialLogins && socialLogins.length > 0 && (
             <>
-              <Divider>{translate('login.orWith')}</Divider>
+              <Divider sx={{color: resolvedTheme.palette.text.primary}}>{translate('login.orWith')}</Divider>
               {socialLogins.map(social => (
                 <Button
                   key={social.provider}
@@ -242,7 +268,7 @@ export function LoginScreen({
           )}
 
           {registerPath && (
-            <Typography variant="body2" sx={{textAlign: "center"}}>
+            <Typography variant="body2" sx={{textAlign: "center", color: resolvedTheme.palette.text.primary}}>
               {translate('login.noAccount')}{' '}
               <Link href={registerPath}>{translate('login.register')}</Link>
             </Typography>

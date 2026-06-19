@@ -42,9 +42,7 @@ export type HandleSocialCodeParams = {
     url?: string;
     responseAdapter?: ResponseAdapter;
 };
-export declare function getSocialLoginUrl(params: GetSocialLoginUrlParams): Promise<FetchCoreResult<{
-    url: string;
-}>>;
+export declare function getSocialLoginUrl(params: GetSocialLoginUrlParams): Promise<FetchCoreResult<string>>;
 export declare function handleSocialCode<TAgent = unknown>(params: HandleSocialCodeParams): Promise<FetchCoreResult<LoginResult & {
     agent?: TAgent;
 }>>;

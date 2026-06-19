@@ -6,6 +6,7 @@ import { LoginScreen } from '../screens/LoginScreen.js';
 import { RegisterScreen } from '../screens/RegisterScreen.js';
 import { RecoverScreen } from '../screens/RecoverScreen.js';
 import { createTheme } from '@mui/material';
+import { setAuthSnapshot } from './AuthStore.js';
 function readFromStorage(storage, key) {
     try {
         if (storage === 'localStorage')
@@ -79,11 +80,15 @@ export function AuthProvider({ children, loginPage, registerPage, recoverPage, s
         setRefreshToken(null);
         setAgent(null);
     }, [setToken, setRefreshToken, setAgent]);
-    // callback estável para o secureFetch atualizar tokens sem acessar React
+    // callback estável para o secureFetchCore atualizar tokens sem acessar React
     const onTokenRefreshed = useCallback((newToken, newRefreshToken) => {
         setToken(newToken);
         setRefreshToken(newRefreshToken);
     }, [setToken, setRefreshToken]);
+    // dentro do componente, após declarar token, refreshToken, onTokenRefreshed, logout
+    useEffect(() => {
+        setAuthSnapshot({ token, refreshToken, onTokenRefreshed, logout });
+    }, [token, refreshToken, onTokenRefreshed, logout]);
     const value = useMemo(() => ({
         logged,
         token,

@@ -1,6 +1,7 @@
 // src/sso/resourceService.ts
 
-import { secureFetch } from '../http/secureFetch.js';
+import { useCallback } from 'react';
+import { useSecureFetch } from '../hooks/useSecureFetch.js';
 import { FetchCoreResult, ResponseAdapter } from '../http/fetchCore.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 
@@ -27,19 +28,14 @@ export type ResourcePermissionData = {
 };
 
 export type GetAllowedResourcesParams = {
-  token?: string;
-  refreshToken?: string;
   systemId?: number;
   url?: string;
   endpoint?: string;
   responseAdapter?: ResponseAdapter;
-  onTokenRefreshed?: (newToken: string, newRefreshToken: string) => void;
   onRefreshTokenExpired?: () => void;
 };
 
 export type GetResourcePermissionParams = {
-  token?: string;
-  refreshToken?: string;
   resourcePath?: string;
   systemId?: number;
   accessProfileId?: number;
@@ -47,70 +43,76 @@ export type GetResourcePermissionParams = {
   url?: string;
   endpoint?: string;
   responseAdapter?: ResponseAdapter;
-  onTokenRefreshed?: (newToken: string, newRefreshToken: string) => void;
   onRefreshTokenExpired?: () => void;
 };
 
-export async function getAllowedResources(
-  params: GetAllowedResourcesParams
-): Promise<FetchCoreResult<ResourcePermissionData[]>> {
-  const config = getSsoConfig();
-  const base = params.url ?? config.ssoUrl ?? '';
-  const endpoint = params.endpoint ?? config.ssoGetAllowedResourcesEndpoint ?? '';
-  const responseAdapter = (params.responseAdapter ?? config.responseAdapter) as
-    | ResponseAdapter<ResourcePermissionData[]>
-    | undefined;
+export function useGetAllowedResources() {
+  const secureFetchCore = useSecureFetch();
 
-  return await secureFetch<ResourcePermissionData[]>({
-    url: `${base}${endpoint}`,
-    method: 'POST',
-    token: params.token,
-    refreshToken: params.refreshToken,
-    body: {
-      queryParams: {
-        systemId: params.systemId ?? config.ssoThisSystemId,
-        allowedAccess: 1,
-      },
+  return useCallback(
+    async (
+      params: GetAllowedResourcesParams = {}
+    ): Promise<FetchCoreResult<ResourcePermissionData[]>> => {
+      const config = getSsoConfig();
+      const base = params.url ?? config.ssoUrl ?? '';
+      const endpoint = params.endpoint ?? config.ssoGetAllowedResourcesEndpoint ?? '';
+      const responseAdapter = (params.responseAdapter ?? config.responseAdapter) as
+        | ResponseAdapter<ResourcePermissionData[]>
+        | undefined;
+
+      return secureFetchCore<ResourcePermissionData[]>({
+        url: `${base}${endpoint}`,
+        method: 'POST',
+        body: {
+          queryParams: {
+            systemId: params.systemId ?? config.ssoThisSystemId,
+            allowedAccess: 1,
+          },
+        },
+        responseAdapter,
+        onRefreshTokenExpired: params.onRefreshTokenExpired,
+      });
     },
-    responseAdapter,
-    onTokenRefreshed: params.onTokenRefreshed,
-    onRefreshTokenExpired: params.onRefreshTokenExpired,
-  });
-
+    [secureFetchCore]
+  );
 }
 
-export async function getResourcePermission(
-  params: GetResourcePermissionParams
-): Promise<FetchCoreResult<ResourcePermissionData[]>> {
-  const config = getSsoConfig();
-  const base = params.url ?? config.ssoUrl ?? '';
-  const endpoint = params.endpoint ?? config.ssoGetResourcePermissionsEndpoint ?? '';
-  const responseAdapter = (params.responseAdapter ?? config.responseAdapter) as
-    | ResponseAdapter<ResourcePermissionData[]>
-    | undefined;
+export function useGetResourcePermission() {
+  const secureFetchCore = useSecureFetch();
 
-  const queryParams: Record<string, unknown> = {};
+  return useCallback(
+    async (
+      params: GetResourcePermissionParams = {}
+    ): Promise<FetchCoreResult<ResourcePermissionData[]>> => {
+      const config = getSsoConfig();
+      const base = params.url ?? config.ssoUrl ?? '';
+      const endpoint = params.endpoint ?? config.ssoGetResourcePermissionsEndpoint ?? '';
+      const responseAdapter = (params.responseAdapter ?? config.responseAdapter) as
+        | ResponseAdapter<ResourcePermissionData[]>
+        | undefined;
 
-  if (params.systemId ?? config.ssoThisSystemId)
-    queryParams.systemId = params.systemId ?? config.ssoThisSystemId;
+      const queryParams: Record<string, unknown> = {};
 
-  if (params.accessProfileId)
-    queryParams.accessProfileId = params.accessProfileId;
+      if (params.systemId ?? config.ssoThisSystemId)
+        queryParams.systemId = params.systemId ?? config.ssoThisSystemId;
 
-  if (params.resourceTypeId)
-    queryParams.resourceTypeId = params.resourceTypeId;
+      if (params.accessProfileId)
+        queryParams.accessProfileId = params.accessProfileId;
 
-  if (params.resourcePath)
-    queryParams.resourcePaths = [params.resourcePath];
+      if (params.resourceTypeId)
+        queryParams.resourceTypeId = params.resourceTypeId;
 
-  return secureFetch<ResourcePermissionData[]>({
-    url: `${base}${endpoint}`,
-    method: 'POST',
-    token: params.token,
-    refreshToken: params.refreshToken,
-    body: { queryParams },
-    responseAdapter,
-    onTokenRefreshed: params.onTokenRefreshed,
-    onRefreshTokenExpired: params.onRefreshTokenExpired,
-  });
+      if (params.resourcePath)
+        queryParams.resourcePaths = [params.resourcePath];
+
+      return secureFetchCore<ResourcePermissionData[]>({
+        url: `${base}${endpoint}`,
+        method: 'POST',
+        body: { queryParams },
+        responseAdapter,
+        onRefreshTokenExpired: params.onRefreshTokenExpired,
+      });
+    },
+    [secureFetchCore]
+  );
 }

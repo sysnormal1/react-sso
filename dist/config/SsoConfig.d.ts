@@ -24,6 +24,7 @@ export type SsoConfigParams = {
     appLogo?: ReactNode;
     appTitle?: string;
     themeMode?: PaletteMode;
+    translater?: (text: string, options?: any) => string;
 };
 export declare function ssoConfig(params: SsoConfigParams): void;
 export declare function getSsoConfig(): Readonly<SsoConfigParams>;

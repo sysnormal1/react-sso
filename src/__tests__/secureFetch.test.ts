@@ -1,6 +1,6 @@
-// src/__tests__/secureFetch.test.ts
+// src/__tests__/secureFetchCore.test.ts
 
-import { secureFetch } from '../http/secureFetch.js';
+import { secureFetchCore } from '../http/secureFetchCore.js';
 import { ssoConfig } from '../config/SsoConfig.js';
 
 ssoConfig({ ssoUrl: 'http://localhost', ssoRefreshTokenEndpoint: '/auth/refresh_token' });
@@ -18,10 +18,10 @@ const mockFetch = (...responses: { body: unknown; status: number }[]) => {
   };
 };
 
-describe('secureFetch', () => {
+describe('secureFetchCore', () => {
   it('deve retornar resultado direto quando token válido', async () => {
     mockFetch({ body: { id: 1 }, status: 200 });
-    const result = await secureFetch({ url: 'http://localhost/api', token: 'valid' });
+    const result = await secureFetchCore({ url: 'http://localhost/api', token: 'valid' });
     expect(result.success).toBe(true);
   });
 
@@ -36,7 +36,7 @@ describe('secureFetch', () => {
       { body: { id: 1 }, status: 200 },
     );
 
-    const result = await secureFetch({
+    const result = await secureFetchCore({
       url: 'http://localhost/api',
       token: 'expired-token',
       refreshToken: 'refresh-token',
@@ -61,7 +61,7 @@ describe('secureFetch', () => {
       { body: { message: 'expired', success: false }, status: 401 },
     );
 
-    await secureFetch({
+    await secureFetchCore({
       url: 'http://localhost/api',
       token: 'expired-token',
       refreshToken: 'expired-refresh',
@@ -76,7 +76,7 @@ describe('secureFetch', () => {
 
     mockFetch({ body: { message: 'expired' }, status: 401 });
 
-    const result = await secureFetch({
+    const result = await secureFetchCore({
       url: 'http://localhost/api',
       token: 'expired-token',
       onRefreshTokenExpired: () => { expiredCalled = true; },

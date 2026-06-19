@@ -1,5 +1,5 @@
-// src/__tests__/secureFetch.test.ts
-import { secureFetch } from '../http/secureFetch.js';
+// src/__tests__/secureFetchCore.test.ts
+import { secureFetchCore } from '../http/secureFetchCore.js';
 import { ssoConfig } from '../config/SsoConfig.js';
 ssoConfig({ ssoUrl: 'http://localhost', ssoRefreshTokenEndpoint: '/auth/refresh_token' });
 const mockFetch = (...responses) => {
@@ -14,10 +14,10 @@ const mockFetch = (...responses) => {
         };
     };
 };
-describe('secureFetch', () => {
+describe('secureFetchCore', () => {
     it('deve retornar resultado direto quando token válido', async () => {
         mockFetch({ body: { id: 1 }, status: 200 });
-        const result = await secureFetch({ url: 'http://localhost/api', token: 'valid' });
+        const result = await secureFetchCore({ url: 'http://localhost/api', token: 'valid' });
         expect(result.success).toBe(true);
     });
     it('deve tentar refresh e repetir quando token expirado', async () => {
@@ -25,7 +25,7 @@ describe('secureFetch', () => {
         let capturedToken = '';
         let capturedRefresh = '';
         mockFetch({ body: { message: 'expired', success: false }, status: 401 }, { body: { token: 'new-token', refreshToken: 'new-refresh' }, status: 200 }, { body: { id: 1 }, status: 200 });
-        const result = await secureFetch({
+        const result = await secureFetchCore({
             url: 'http://localhost/api',
             token: 'expired-token',
             refreshToken: 'refresh-token',
@@ -43,7 +43,7 @@ describe('secureFetch', () => {
     it('deve chamar onRefreshTokenExpired quando refresh falha', async () => {
         let expiredCalled = false;
         mockFetch({ body: { message: 'expired', success: false }, status: 401 }, { body: { message: 'expired', success: false }, status: 401 });
-        await secureFetch({
+        await secureFetchCore({
             url: 'http://localhost/api',
             token: 'expired-token',
             refreshToken: 'expired-refresh',
@@ -54,7 +54,7 @@ describe('secureFetch', () => {
     it('deve retornar erro sem tentar refresh quando refreshToken ausente', async () => {
         let expiredCalled = false;
         mockFetch({ body: { message: 'expired' }, status: 401 });
-        const result = await secureFetch({
+        const result = await secureFetchCore({
             url: 'http://localhost/api',
             token: 'expired-token',
             onRefreshTokenExpired: () => { expiredCalled = true; },

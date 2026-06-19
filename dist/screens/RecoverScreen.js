@@ -1,9 +1,10 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // src/screens/RecoverScreen.tsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Alert, Box, Button, CircularProgress, Link, TextField, ThemeProvider, Typography, createTheme, } from '@mui/material';
 import { fetchCore } from '../http/fetchCore.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
+import { getInitialThemeMode } from '../utils/themeUtils.js';
 const defaultTexts = {
     'recover.title': 'Password recover',
     'recover.subtitle': 'Enter your email or registered username and we will send you instructions to recover your password.',
@@ -22,22 +23,36 @@ const defaultTexts = {
     'error.recoverFailed': 'Recorer request failed.',
 };
 const defaultTheme = createTheme();
-export function RecoverScreen({ logo, title = 'Password recover', theme = defaultTheme, slots, ssoUrl, loginPath = '/auth/login', onSuccess, onError, t }) {
+export function RecoverScreen({ logo, title, theme: clientTheme, slots, ssoUrl, loginPath = '/auth/login', onSuccess, onError }) {
     const [identifier, setIdentifier] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     const config = getSsoConfig();
+    // detecta tema inicial e reage a mudanças do sistema em tempo real
+    const [detectedMode, setDetectedMode] = useState(getInitialThemeMode);
+    useEffect(() => {
+        // só escuta se não há tema externo nem config forçando um modo
+        if (clientTheme || config.themeMode)
+            return;
+        const stored = localStorage?.getItem('drawerLayoutTheme');
+        if (stored)
+            return; // usuário já escolheu manualmente
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const handler = (e) => setDetectedMode(e.matches ? 'dark' : 'light');
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, [clientTheme, config.themeMode]);
     const handleError = useCallback((message) => {
         setError(message);
         onError?.(message);
     }, [onError]);
-    const translate = t ?? ((key) => defaultTexts[key] ?? key);
+    const translate = config.translater ?? ((key) => defaultTexts[key] ?? key);
     const resolvedLogo = logo ?? config.appLogo;
     const resolvedTitle = title ?? config.appTitle ?? translate('recover.title');
-    const resolvedTheme = theme ?? (config.themeMode
+    const resolvedTheme = clientTheme ?? (config.themeMode
         ? createTheme({ palette: { mode: config.themeMode } })
-        : defaultTheme);
+        : createTheme({ palette: { mode: detectedMode } }));
     const handleSubmit = useCallback(async () => {
         if (!identifier) {
             handleError(translate('error.fillAllFields'));
@@ -82,5 +97,5 @@ export function RecoverScreen({ logo, title = 'Password recover', theme = defaul
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 2,
-                }, children: [slots?.header ?? (_jsxs(Box, { sx: { textAlign: 'center', mb: 1 }, children: [resolvedLogo && _jsx(Box, { sx: { mb: 1 }, children: resolvedLogo }), _jsx(Typography, { variant: "h5", sx: { fontWeight: "bold" }, children: resolvedTitle })] })), error && _jsx(Alert, { severity: "error", children: error }), success ? (_jsxs(Alert, { severity: "success", children: [translate('recover.success_message'), ' ', _jsx(Link, { href: loginPath, children: translate('recover.back_to_login') })] })) : (_jsxs(_Fragment, { children: [_jsx(Typography, { variant: "body2", color: "text.secondary", children: translate('recover.subtitle') }), slots?.extraFields, _jsx(TextField, { label: translate('recover.identifier'), value: identifier, onChange: e => setIdentifier(e.target.value), onKeyDown: e => e.key === 'Enter' && handleSubmit(), fullWidth: true, autoComplete: "username" }), _jsx(Button, { variant: "contained", fullWidth: true, onClick: handleSubmit, disabled: loading, size: "large", children: loading ? _jsx(CircularProgress, { size: 24, color: "inherit" }) : translate('recover.send_instructions') }), _jsx(Typography, { variant: "body2", sx: { textAlign: "center" }, children: _jsx(Link, { href: loginPath, children: translate('recover.back_to_login') }) })] })), slots?.footer] }) }) }));
+                }, children: [slots?.header ?? (_jsxs(Box, { sx: { textAlign: 'center', mb: 1 }, children: [resolvedLogo && _jsx(Box, { sx: { mb: 1 }, children: resolvedLogo }), _jsx(Typography, { variant: "h5", sx: { fontWeight: "bold", color: resolvedTheme.palette.text.primary }, children: resolvedTitle })] })), error && _jsx(Alert, { severity: "error", children: translate(error) }), success ? (_jsxs(Alert, { severity: "success", children: [translate('recover.success_message'), ' ', _jsx(Link, { href: loginPath, children: translate('recover.back_to_login') })] })) : (_jsxs(_Fragment, { children: [_jsx(Typography, { variant: "body2", sx: { color: resolvedTheme.palette.text.secondary }, children: translate('recover.subtitle') }), slots?.extraFields, _jsx(TextField, { label: translate('recover.identifier'), value: identifier, onChange: e => setIdentifier(e.target.value), onKeyDown: e => e.key === 'Enter' && handleSubmit(), fullWidth: true, autoComplete: "username" }), _jsx(Button, { variant: "contained", fullWidth: true, onClick: handleSubmit, disabled: loading, size: "large", children: loading ? _jsx(CircularProgress, { size: 24, color: "inherit" }) : translate('recover.send_instructions') }), _jsx(Typography, { variant: "body2", sx: { textAlign: "center" }, children: _jsx(Link, { href: loginPath, children: translate('recover.back_to_login') }) })] })), slots?.footer] }) }) }));
 }

@@ -21,18 +21,13 @@ export type ResourcePermissionData = {
     target?: string;
 };
 export type GetAllowedResourcesParams = {
-    token?: string;
-    refreshToken?: string;
     systemId?: number;
     url?: string;
     endpoint?: string;
     responseAdapter?: ResponseAdapter;
-    onTokenRefreshed?: (newToken: string, newRefreshToken: string) => void;
     onRefreshTokenExpired?: () => void;
 };
 export type GetResourcePermissionParams = {
-    token?: string;
-    refreshToken?: string;
     resourcePath?: string;
     systemId?: number;
     accessProfileId?: number;
@@ -40,9 +35,8 @@ export type GetResourcePermissionParams = {
     url?: string;
     endpoint?: string;
     responseAdapter?: ResponseAdapter;
-    onTokenRefreshed?: (newToken: string, newRefreshToken: string) => void;
     onRefreshTokenExpired?: () => void;
 };
-export declare function getAllowedResources(params: GetAllowedResourcesParams): Promise<FetchCoreResult<ResourcePermissionData[]>>;
-export declare function getResourcePermission(params: GetResourcePermissionParams): Promise<FetchCoreResult<ResourcePermissionData[]>>;
+export declare function useGetAllowedResources(): (params?: GetAllowedResourcesParams) => Promise<FetchCoreResult<ResourcePermissionData[]>>;
+export declare function useGetResourcePermission(): (params?: GetResourcePermissionParams) => Promise<FetchCoreResult<ResourcePermissionData[]>>;
 //# sourceMappingURL=resourceService.d.ts.map

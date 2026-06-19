@@ -1,6 +1,6 @@
 // src/screens/RecoverScreen.tsx
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Alert,
   Box,
@@ -11,10 +11,12 @@ import {
   ThemeProvider,
   Typography,
   createTheme,
+  useTheme,
 } from '@mui/material';
 import { fetchCore } from '../http/fetchCore.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 import { RecoverScreenProps } from './types.js';
+import { getInitialThemeMode } from '../utils/themeUtils.js';
 
 const defaultTexts: Record<string, string> = {
     'recover.title': 'Password recover',
@@ -38,14 +40,13 @@ const defaultTheme = createTheme();
 
 export function RecoverScreen({
   logo,
-  title = 'Password recover',
-  theme = defaultTheme,
+  title,
+  theme: clientTheme,
   slots,
   ssoUrl,
   loginPath = '/auth/login',
   onSuccess,
-  onError,
-  t
+  onError
 }: RecoverScreenProps) {
   const [identifier, setIdentifier] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,20 +54,36 @@ export function RecoverScreen({
   const [success, setSuccess] = useState(false);
   const config = getSsoConfig();
 
+  // detecta tema inicial e reage a mudanças do sistema em tempo real
+  const [detectedMode, setDetectedMode] = useState(getInitialThemeMode);
+
+  useEffect(() => {
+    // só escuta se não há tema externo nem config forçando um modo
+    if (clientTheme || config.themeMode) return;
+
+    const stored = localStorage?.getItem('drawerLayoutTheme');
+    if (stored) return; // usuário já escolheu manualmente
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setDetectedMode(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [clientTheme, config.themeMode]);
+
   const handleError = useCallback((message: string) => {
     setError(message);
     onError?.(message);
   }, [onError]);
 
-  const translate = t ?? ((key: string) => defaultTexts[key] ?? key);
+  const translate = config.translater ?? ((key: string) => defaultTexts[key] ?? key);
 
   const resolvedLogo = logo ?? config.appLogo;
-    const resolvedTitle = title ?? config.appTitle ?? translate('recover.title');
-    const resolvedTheme = theme ?? (
-        config.themeMode
-        ? createTheme({ palette: { mode: config.themeMode } })
-        : defaultTheme
-    );
+  const resolvedTitle = title ?? config.appTitle ?? translate('recover.title');
+  const resolvedTheme = clientTheme ?? (
+    config.themeMode
+      ? createTheme({ palette: { mode: config.themeMode } })
+      : createTheme({ palette: { mode: detectedMode } })
+  );
 
   const handleSubmit = useCallback(async () => {
     if (!identifier) {
@@ -122,13 +139,13 @@ export function RecoverScreen({
           {slots?.header ?? (
             <Box sx={{ textAlign: 'center', mb: 1 }}>
               {resolvedLogo && <Box sx={{ mb: 1 }}>{resolvedLogo}</Box>}
-              <Typography variant="h5" sx={{fontWeight: "bold"}}>
+              <Typography variant="h5" sx={{fontWeight: "bold", color: resolvedTheme.palette.text.primary}}>
                 {resolvedTitle}
               </Typography>
             </Box>
           )}
 
-          {error && <Alert severity="error">{error}</Alert>}
+          {error && <Alert severity="error">{translate(error)}</Alert>}
 
           {success ? (
             <Alert severity="success">
@@ -137,7 +154,7 @@ export function RecoverScreen({
             </Alert>
           ) : (
             <>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{color: resolvedTheme.palette.text.secondary}}>
                 {translate('recover.subtitle')}
               </Typography>
 
