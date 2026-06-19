@@ -1,37 +1,71 @@
-// src/http/fetchCore.ts
 
-import { responseParser } from "./responseCore.js";
-
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-
-export type FetchCoreResult<T = unknown> = {
-  success: boolean;
-  status: number;
-  data?: T;
-  message?: string;
-};
-
-export type ResponseAdapter<T = unknown> = (
-  raw: unknown,
-  httpStatus: number
-) => FetchCoreResult<T>;
-
-export type FetchCoreParams<T = unknown> = {
-  url: string;
-  method?: HttpMethod;
-  token?: string;
-  body?: unknown;
-  headers?: Record<string, string>;
-  responseAdapter?: ResponseAdapter<T>;
-  useLargeJsonParser?: boolean;
-};
-
-
+/**
+ * Parses very large JSON responses that arrive split across multiple buffers.
+ *
+ * @remarks
+ * Some APIs return extremely large JSON payloads that may be received
+ * in multiple string chunks (buffers). Attempting to directly concatenate
+ * and parse these buffers using `JSON.parse()` can lead to:
+ *
+ * - excessive memory usage
+ * - stack overflow errors
+ * - performance issues
+ *
+ * This helper performs a **partial extraction of the `data` array**
+ * while iterating through the buffers, parsing each object individually.
+ *
+ * The function supports payloads formatted as:
+ *
+ * ```json
+ * {
+ *   "data":[{ "DATA":[ {...},{...} ] }]
+ * }
+ * ```
+ *
+ * or
+ *
+ * ```json
+ * {
+ *   "data":[ {...},{...} ]
+ * }
+ * ```
+ *
+ * Instead of parsing the entire structure at once, it:
+ *
+ * 1. Locates the `data` array in the first buffer.
+ * 2. Extracts object fragments across multiple buffers.
+ * 3. Parses each object individually.
+ * 4. Rebuilds the final JSON structure with the parsed objects.
+ *
+ * This approach significantly reduces memory pressure when handling
+ * very large JSON datasets.
+ *
+ * @param stringBuffer
+ * An array of string fragments representing parts of a JSON response.
+ *
+ * @returns
+ * The reconstructed and parsed JSON object, or `null` if no data
+ * was provided.
+ *
+ * @example
+ * ```ts
+ * const buffers = [
+ *   '{"data":[{"DATA":[{"id":1},{"id":2}',
+ *   ',{"id":3},{"id":4}]}]}'
+ * ];
+ *
+ * const result = largeJsonParse(buffers);
+ *
+ * console.log(result.data);
+ * ```
+ */
 export function largeJsonParse(stringBuffer?: any) {
 
     let result = null;
 
     if (stringBuffer) {
+
+        console.debug(stringBuffer);
 
         let strInit = '"data":[{"DATA":[';
 
@@ -155,46 +189,36 @@ export function largeJsonParse(stringBuffer?: any) {
     return result;
 }
 
-export async function fetchCore<T = unknown>(
-  params: FetchCoreParams<T>
-): Promise<FetchCoreResult<T>> {
-  const {
-    url,
-    method = 'GET',
-    token,
-    body,
-    headers: extraHeaders,
-    responseAdapter,
-    useLargeJsonParser = false
-  } = params;
 
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-    ...extraHeaders,
-  };
 
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
 
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body !== undefined ? (typeof body === "object" ? JSON.stringify(body) : body) : undefined as any,
-  });
-  
-  const raw: any = await responseParser(response, useLargeJsonParser);
 
-  if (responseAdapter) {
-    return responseAdapter(raw, response.status);
-  }
+export async function responseParser(response?: Response, useLargeJsonParser: boolean = false) : Promise<any> {
+    //const raw = await response.json();
+    let result: any;
 
-  // comportamento padrão: assume que o json já tem success/data/message
-  return {
-    success: response.ok,
-    status: response.status,
-    data: raw as T,
-    message: raw?.message,
-  };
+    /**
+     * Handle large streaming JSON responses.
+     */
+    if (typeof response?.body?.getReader == 'function' && useLargeJsonParser === true) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let stringBuffer = [];
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            stringBuffer.push(decoder.decode(value, { stream: true }));
+        }
+
+        const totalCharacters = stringBuffer.reduce((acc, str) => acc + str.length, 0);
+        if (totalCharacters >= 150000) {
+            result = largeJsonParse(stringBuffer);
+        } else {
+            result = JSON.parse(stringBuffer.join(''));
+        }
+    } else {
+        result = await response?.json();
+    } 
+
+    return result;
 }

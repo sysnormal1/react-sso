@@ -9,7 +9,7 @@ export type SecureFetchCoreParams<T = unknown> = Omit<FetchCoreParams<T>, 'token
   refreshUrl?: string;
   responseAdapter?: ResponseAdapter<T>;
   onTokenRefreshed?: (newToken: string, newRefreshToken: string) => void;
-  onRefreshTokenExpired?: () => void;
+  onRefreshTokenExpired?: () => void;  
 };
 
 export async function secureFetchCore<T = unknown>(
