@@ -19,5 +19,6 @@ export { login, refreshTokenRequest, getSocialLoginUrl, handleSocialCode } from 
 export { LoginScreen } from './screens/LoginScreen.js';
 export { RegisterScreen } from './screens/RegisterScreen.js';
 export { RecoverScreen } from './screens/RecoverScreen.js';
+export { PasswordChangeScreen } from './screens/PasswordChangeScreen.js';
 export { useSocialLoginCallback } from './hooks/useSocialLoginCallback.js';
 export { UserMenu } from './components/UserMenu.js';

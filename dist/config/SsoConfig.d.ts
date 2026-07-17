@@ -23,6 +23,7 @@ export type SsoConfigParams = {
     responseAdapter?: ResponseAdapter;
     appLogo?: ReactNode;
     appTitle?: string;
+    appAddress?: string;
     themeMode?: PaletteMode;
     translater?: (text: string, options?: any) => string;
 };

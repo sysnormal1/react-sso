@@ -35,6 +35,7 @@ export type SsoConfigParams = {
 
   appLogo?: ReactNode;
   appTitle?: string;
+  appAddress?: string;
   themeMode?: PaletteMode;
 
   translater?: (text: string, options?: any) => string;

@@ -65,7 +65,10 @@ export function RecoverScreen({ logo, title, theme: clientTheme, slots, ssoUrl, 
             const result = await fetchCore({
                 url: `${ssoUrl ?? config.ssoUrl}/auth/send_email_recover_password`,
                 method: 'POST',
-                body: { identifier },
+                body: {
+                    identifier,
+                    passwordChangeInterfacePath: `${config.appAddress}/auth/password_change`
+                },
                 responseAdapter: config.responseAdapter,
             });
             if (result.success) {

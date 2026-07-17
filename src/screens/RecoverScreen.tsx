@@ -53,6 +53,7 @@ export function RecoverScreen({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const config = getSsoConfig();
+  
 
   // detecta tema inicial e reage a mudanças do sistema em tempo real
   const [detectedMode, setDetectedMode] = useState(getInitialThemeMode);
@@ -97,7 +98,10 @@ export function RecoverScreen({
       const result = await fetchCore({
         url: `${ssoUrl ?? config.ssoUrl}/auth/send_email_recover_password`,
         method: 'POST',
-        body: { identifier },
+        body: { 
+          identifier,
+          passwordChangeInterfacePath: `${config.appAddress}/auth/password_change`
+       },
         responseAdapter: config.responseAdapter,
       });
       if (result.success) {

@@ -14,6 +14,7 @@ import { RecoverScreen } from '../screens/RecoverScreen.js';
 import { createTheme, PaletteMode, Theme } from '@mui/material';
 import { SocialLoginConfig } from '../screens/types.js';
 import { setAuthSnapshot } from './AuthStore.js';
+import { PasswordChangeScreen } from '../screens/PasswordChangeScreen.js';
 
 
 export type StorageType = 'localStorage' | 'sessionStorage' | 'none';
@@ -23,10 +24,12 @@ export type AuthProviderProps<TAgent = unknown> = {
   loginPage?: ReactNode;
   registerPage?: ReactNode;
   recoverPage?: ReactNode;
+  passwordChangePage?: ReactNode;
   storage?: StorageType;
   loginPath?: string;
   registerPath?: string;
   recoverPath?: string;
+  passwordChangePath?: string,
   publicPrefix?: string;
   initialToken?: string;
   initialRefreshToken?: string;
@@ -75,10 +78,12 @@ export function AuthProvider<TAgent = unknown>({
   loginPage,
   registerPage,
   recoverPage,
+  passwordChangePage,
   storage = 'localStorage',
   loginPath = '/auth/login',
   registerPath = '/auth/register',
   recoverPath = '/auth/recover',
+  passwordChangePath = '/auth/password_change',
   publicPrefix = '/public',
   initialToken,
   initialRefreshToken,
@@ -177,6 +182,7 @@ export function AuthProvider<TAgent = unknown>({
   const isPublic = currentPath.startsWith(publicPrefix);
   const isRegister = currentPath.startsWith(registerPath);
   const isRecover = currentPath.startsWith(recoverPath);
+  const isPasswordChange = currentPath.startsWith(passwordChangePath);
 
   const renderContent = (): ReactNode => {
     if (logged || isPublic) return children;
@@ -195,6 +201,14 @@ export function AuthProvider<TAgent = unknown>({
       title={appTitle}
       theme={appTheme}
     />;
+    if (isPasswordChange && passwordChangePage) return passwordChangePage;
+    if (isPasswordChange) return <PasswordChangeScreen 
+      loginPath={loginPath} 
+      logo={appLogo}
+      title={appTitle}
+      theme={appTheme}
+    />;
+
     return loginPage ?? <LoginScreen 
       registerPath={registerPath} 
       recoverPath={recoverPath} 

@@ -7,10 +7,12 @@ export type AuthProviderProps<TAgent = unknown> = {
     loginPage?: ReactNode;
     registerPage?: ReactNode;
     recoverPage?: ReactNode;
+    passwordChangePage?: ReactNode;
     storage?: StorageType;
     loginPath?: string;
     registerPath?: string;
     recoverPath?: string;
+    passwordChangePath?: string;
     publicPrefix?: string;
     initialToken?: string;
     initialRefreshToken?: string;
@@ -20,5 +22,5 @@ export type AuthProviderProps<TAgent = unknown> = {
     themeMode?: PaletteMode;
     socialLogins?: SocialLoginConfig[];
 };
-export declare function AuthProvider<TAgent = unknown>({ children, loginPage, registerPage, recoverPage, storage, loginPath, registerPath, recoverPath, publicPrefix, initialToken, initialRefreshToken, initialAgent, appLogo, appTitle, themeMode, socialLogins, }: AuthProviderProps<TAgent>): import("react").JSX.Element;
+export declare function AuthProvider<TAgent = unknown>({ children, loginPage, registerPage, recoverPage, passwordChangePage, storage, loginPath, registerPath, recoverPath, passwordChangePath, publicPrefix, initialToken, initialRefreshToken, initialAgent, appLogo, appTitle, themeMode, socialLogins, }: AuthProviderProps<TAgent>): import("react").JSX.Element;
 //# sourceMappingURL=AuthProvider.d.ts.map

@@ -7,6 +7,7 @@ import { RegisterScreen } from '../screens/RegisterScreen.js';
 import { RecoverScreen } from '../screens/RecoverScreen.js';
 import { createTheme } from '@mui/material';
 import { setAuthSnapshot } from './AuthStore.js';
+import { PasswordChangeScreen } from '../screens/PasswordChangeScreen.js';
 function readFromStorage(storage, key) {
     try {
         if (storage === 'localStorage')
@@ -45,7 +46,7 @@ function parseAgent(raw) {
         return null;
     }
 }
-export function AuthProvider({ children, loginPage, registerPage, recoverPage, storage = 'localStorage', loginPath = '/auth/login', registerPath = '/auth/register', recoverPath = '/auth/recover', publicPrefix = '/public', initialToken, initialRefreshToken, initialAgent, appLogo, appTitle, themeMode, socialLogins, }) {
+export function AuthProvider({ children, loginPage, registerPage, recoverPage, passwordChangePage, storage = 'localStorage', loginPath = '/auth/login', registerPath = '/auth/register', recoverPath = '/auth/recover', passwordChangePath = '/auth/password_change', publicPrefix = '/public', initialToken, initialRefreshToken, initialAgent, appLogo, appTitle, themeMode, socialLogins, }) {
     const [token, setTokenState] = useState(initialToken ?? readFromStorage(storage, 'token'));
     const [refreshToken, setRefreshTokenState] = useState(initialRefreshToken ?? readFromStorage(storage, 'refreshToken'));
     const [agent, setAgentState] = useState(initialAgent ?? parseAgent(readFromStorage(storage, 'agent')));
@@ -107,6 +108,7 @@ export function AuthProvider({ children, loginPage, registerPage, recoverPage, s
     const isPublic = currentPath.startsWith(publicPrefix);
     const isRegister = currentPath.startsWith(registerPath);
     const isRecover = currentPath.startsWith(recoverPath);
+    const isPasswordChange = currentPath.startsWith(passwordChangePath);
     const renderContent = () => {
         if (logged || isPublic)
             return children;
@@ -118,6 +120,10 @@ export function AuthProvider({ children, loginPage, registerPage, recoverPage, s
             return recoverPage;
         if (isRecover)
             return _jsx(RecoverScreen, { loginPath: loginPath, logo: appLogo, title: appTitle, theme: appTheme });
+        if (isPasswordChange && passwordChangePage)
+            return passwordChangePage;
+        if (isPasswordChange)
+            return _jsx(PasswordChangeScreen, { loginPath: loginPath, logo: appLogo, title: appTitle, theme: appTheme });
         return loginPage ?? _jsx(LoginScreen, { registerPath: registerPath, recoverPath: recoverPath, logo: appLogo, title: appTitle, theme: appTheme, socialLogins: socialLogins });
     };
     return (_jsx(AuthContext.Provider, { value: value, children: renderContent() }));
