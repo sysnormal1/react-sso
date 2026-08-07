@@ -1,6 +1,6 @@
 import { FetchCoreResult, ResponseAdapter } from '../http/fetchCore.js';
 export type ResourcePermissionData = {
-    resourceSystemId: number;
+    resourceDomainId: number;
     resourceId: number;
     resourceParentId?: number;
     resourceTypeId: number;
@@ -21,7 +21,7 @@ export type ResourcePermissionData = {
     target?: string;
 };
 export type GetAllowedResourcesParams = {
-    systemId?: number;
+    domainId?: number;
     url?: string;
     endpoint?: string;
     responseAdapter?: ResponseAdapter;
@@ -29,7 +29,7 @@ export type GetAllowedResourcesParams = {
 };
 export type GetResourcePermissionParams = {
     resourcePath?: string;
-    systemId?: number;
+    domainId?: number;
     accessProfileId?: number;
     resourceTypeId?: number;
     url?: string;

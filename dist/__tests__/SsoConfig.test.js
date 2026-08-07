@@ -8,10 +8,10 @@ describe('SsoConfig', () => {
         expect(config.ssoRefreshTokenEndpoint).toBe('/auth/refresh_token');
     });
     it('deve mesclar configuração fornecida com os padrões', () => {
-        ssoConfig({ ssoUrl: 'https://sso.empresa.com', ssoThisSystemId: 5 });
+        ssoConfig({ ssoUrl: 'https://sso.empresa.com', ssoThisDomainId: 5 });
         const config = getSsoConfig();
         expect(config.ssoUrl).toBe('https://sso.empresa.com');
-        expect(config.ssoThisSystemId).toBe(5);
+        expect(config.ssoThisDomainId).toBe(5);
         expect(config.ssoAuthEndpoint).toBe('/auth/login');
     });
     it('deve anexar a porta à ssoUrl quando ssoPort é fornecido sem ssoUrl', () => {

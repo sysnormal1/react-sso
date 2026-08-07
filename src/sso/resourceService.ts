@@ -6,7 +6,7 @@ import { FetchCoreResult, ResponseAdapter } from '../http/fetchCore.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 
 export type ResourcePermissionData = {
-  resourceSystemId: number;
+  resourceDomainId: number;
   resourceId: number;
   resourceParentId?: number;
   resourceTypeId: number;
@@ -28,7 +28,7 @@ export type ResourcePermissionData = {
 };
 
 export type GetAllowedResourcesParams = {
-  systemId?: number;
+  domainId?: number;
   url?: string;
   endpoint?: string;
   responseAdapter?: ResponseAdapter;
@@ -37,7 +37,7 @@ export type GetAllowedResourcesParams = {
 
 export type GetResourcePermissionParams = {
   resourcePath?: string;
-  systemId?: number;
+  domainId?: number;
   accessProfileId?: number;
   resourceTypeId?: number;
   url?: string;
@@ -65,7 +65,7 @@ export function useGetAllowedResources() {
         method: 'POST',
         body: {
           queryParams: {
-            systemId: params.systemId ?? config.ssoThisSystemId,
+            domainId: params.domainId ?? config.ssoThisDomainId,
             allowedAccess: 1,
           },
         },
@@ -93,8 +93,8 @@ export function useGetResourcePermission() {
 
       const queryParams: Record<string, unknown> = {};
 
-      if (params.systemId ?? config.ssoThisSystemId)
-        queryParams.systemId = params.systemId ?? config.ssoThisSystemId;
+      if (params.domainId ?? config.ssoThisDomainId)
+        queryParams.domainId = params.domainId ?? config.ssoThisDomainId;
 
       if (params.accessProfileId)
         queryParams.accessProfileId = params.accessProfileId;

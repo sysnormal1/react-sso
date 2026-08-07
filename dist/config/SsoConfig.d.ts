@@ -11,14 +11,14 @@ export type SsoConfigParams = {
     ssoRefreshTokenEndpoint?: string;
     ssoRegisterEndpoint?: string;
     ssoRecordsEndpoint?: string;
-    ssoSystemsEndpoint?: string;
+    ssoDomainsEndpoint?: string;
     ssoAccessProfilesEndpoint?: string;
-    ssoAgentsXAccessProfilesXSystemsEndpoint?: string;
+    ssoAgentsXAccessProfilesXDomainsEndpoint?: string;
     ssoResourcesEndpoint?: string;
     ssoResourcePermissionsEndpoint?: string;
     ssoGetAllowedResourcesEndpoint?: string;
     ssoGetResourcePermissionsEndpoint?: string;
-    ssoThisSystemId?: number;
+    ssoThisDomainId?: number;
     ssoResourceTypeScreenId?: number;
     responseAdapter?: ResponseAdapter;
     appLogo?: ReactNode;

@@ -20,15 +20,15 @@ export type SsoConfigParams = {
   ssoRegisterEndpoint?: string;
 
   ssoRecordsEndpoint?: string;
-  ssoSystemsEndpoint?: string;
+  ssoDomainsEndpoint?: string;
   ssoAccessProfilesEndpoint?: string;
-  ssoAgentsXAccessProfilesXSystemsEndpoint?: string;
+  ssoAgentsXAccessProfilesXDomainsEndpoint?: string;
   ssoResourcesEndpoint?: string;
   ssoResourcePermissionsEndpoint?: string;
   ssoGetAllowedResourcesEndpoint?: string;
   ssoGetResourcePermissionsEndpoint?: string;
 
-  ssoThisSystemId?: number;
+  ssoThisDomainId?: number;
   ssoResourceTypeScreenId?: number;
 
   responseAdapter?: ResponseAdapter;
@@ -51,15 +51,15 @@ const defaults: SsoConfigParams = {
   ssoRegisterEndpoint: '/auth/register',
 
   ssoRecordsEndpoint: '/records',
-  ssoSystemsEndpoint: '/records/systems',
+  ssoDomainsEndpoint: '/records/domains',
   ssoAccessProfilesEndpoint: '/records/access_profiles',
-  ssoAgentsXAccessProfilesXSystemsEndpoint: '/records/agents_x_access_profiles_x_systems',
+  ssoAgentsXAccessProfilesXDomainsEndpoint: '/records/agents_x_access_profiles_x_domains',
   ssoResourcesEndpoint: '/records/resources',
   ssoResourcePermissionsEndpoint: '/records/resource_permissions',
   ssoGetAllowedResourcesEndpoint: '/records/resources/get_alloweds',
   ssoGetResourcePermissionsEndpoint: '/records/resources/get_resource_permissions',
 
-  ssoThisSystemId: undefined,
+  ssoThisDomainId: undefined,
   ssoResourceTypeScreenId: 10,
   responseAdapter: undefined, // usa comportamento padrão do fetchCore
   translater: undefined,
