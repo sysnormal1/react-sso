@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "build": "tsc"
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc"
   },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",

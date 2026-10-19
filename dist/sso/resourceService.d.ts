@@ -9,6 +9,13 @@ export type ResourcePermissionData = {
     resourceIcon?: string;
     resourceNumericOrder?: number;
     resourceShowInMenu?: 0 | 1;
+    /**
+     * What holds for whoever no grant reaches: 1 denies, 0 allows access and view (never create, change or delete).
+     * On a resource with 0, the SSO returns it even when no grant applies, with resourcePermissionId null
+     * and the flags already filled - a null grant here is access, not the absence of it.
+     */
+    resourceIsRestricted?: 0 | 1;
+    /** Null on an open resource (resourceIsRestricted 0) that no grant reaches. */
     resourcePermissionId?: number;
     resourcePermissionAccessProfileId?: number;
     resourcePermissionAgentId?: number;
