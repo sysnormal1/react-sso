@@ -17,7 +17,8 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext.js';
-import { login, getSocialLoginUrl, handleSocialCode } from '../sso/authService.js';
+import { login, getSocialLoginUrl } from '../sso/authService.js';
+import { SOCIAL_PROVIDER_KEY, SOCIAL_REDIRECT_URI_KEY } from '../sso/socialCallback.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 import { LoginScreenProps, SocialLoginConfig } from './types.js';
 import { getInitialThemeMode } from '../utils/themeUtils.js';
@@ -51,7 +52,8 @@ export function LoginScreen({
   registerPath = '/auth/register',
   recoverPath = '/auth/recover',
   onSuccess,
-  onError
+  onError,
+  initialError
 }: LoginScreenProps) {
   const { login: authLogin } = useAuth();
 
@@ -60,7 +62,7 @@ export function LoginScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const config = getSsoConfig();
 
   // detecta tema inicial e reage a mudanças do sistema em tempo real
@@ -148,8 +150,8 @@ export function LoginScreen({
       }
 
       // passo 2: salvar provider e redirectUri para usar no retorno
-      sessionStorage.setItem('sso_social_provider', social.provider);
-      sessionStorage.setItem('sso_social_redirect_uri', social.redirectUri);
+      sessionStorage.setItem(SOCIAL_PROVIDER_KEY, social.provider);
+      sessionStorage.setItem(SOCIAL_REDIRECT_URI_KEY, social.redirectUri);
 
       // passo 3: redirecionar
       window.location.href = urlResult.data ;

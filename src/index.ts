@@ -42,6 +42,8 @@ export type { AuthState, AuthActions, AuthContextValue } from './context/AuthCon
 
 // sso
 export { login, refreshTokenRequest, getSocialLoginUrl, handleSocialCode } from './sso/authService.js';
+export { readSocialCallback, withoutOAuthReturnParams, SOCIAL_PROVIDER_KEY, SOCIAL_REDIRECT_URI_KEY } from './sso/socialCallback.js';
+export type { SocialCallback, StoredSocialLogin } from './sso/socialCallback.js';
 export type {
   LoginParams, LoginResult,
   RefreshTokenParams, RefreshTokenResult,

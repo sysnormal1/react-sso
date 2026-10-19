@@ -23,6 +23,8 @@ export type AuthScreenProps = {
 };
 export type LoginScreenProps = AuthScreenProps & {
     socialLogins?: SocialLoginConfig[];
+    /** Erro a mostrar ao abrir a tela, como o de um login social que voltou recusado. */
+    initialError?: string;
     registerPath?: string;
     recoverPath?: string;
 };

@@ -18,6 +18,8 @@ export type { AuthProviderProps, StorageType } from './context/AuthProvider.js';
 export { useAuth } from './context/AuthContext.js';
 export type { AuthState, AuthActions, AuthContextValue } from './context/AuthContext.js';
 export { login, refreshTokenRequest, getSocialLoginUrl, handleSocialCode } from './sso/authService.js';
+export { readSocialCallback, withoutOAuthReturnParams, SOCIAL_PROVIDER_KEY, SOCIAL_REDIRECT_URI_KEY } from './sso/socialCallback.js';
+export type { SocialCallback, StoredSocialLogin } from './sso/socialCallback.js';
 export type { LoginParams, LoginResult, RefreshTokenParams, RefreshTokenResult, SocialProvider, GetSocialLoginUrlParams, HandleSocialCodeParams } from './sso/authService.js';
 export { LoginScreen } from './screens/LoginScreen.js';
 export { RegisterScreen } from './screens/RegisterScreen.js';

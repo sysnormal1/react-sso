@@ -5,6 +5,7 @@ import { Alert, Box, Button, CircularProgress, Divider, Link, TextField, ThemePr
 import { fetchCore } from '../http/fetchCore.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 import { getSocialLoginUrl } from '../sso/authService.js';
+import { SOCIAL_PROVIDER_KEY, SOCIAL_REDIRECT_URI_KEY } from '../sso/socialCallback.js';
 import { getInitialThemeMode } from '../utils/themeUtils.js';
 const defaultTexts = {
     'register.title': 'Login',
@@ -107,8 +108,8 @@ export function RegisterScreen({ logo, title, theme: clientTheme, slots, ssoUrl,
                 return;
             }
             // passo 2: salvar provider e redirectUri para usar no retorno
-            sessionStorage.setItem('sso_social_provider', social.provider);
-            sessionStorage.setItem('sso_social_redirect_uri', social.redirectUri);
+            sessionStorage.setItem(SOCIAL_PROVIDER_KEY, social.provider);
+            sessionStorage.setItem(SOCIAL_REDIRECT_URI_KEY, social.redirectUri);
             // passo 3: redirecionar
             window.location.href = urlResult.data;
         }

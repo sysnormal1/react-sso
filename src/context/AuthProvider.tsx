@@ -11,10 +11,20 @@ import { AuthContext, AuthContextValue } from './AuthContext.js';
 import { LoginScreen } from '../screens/LoginScreen.js';
 import { RegisterScreen } from '../screens/RegisterScreen.js';
 import { RecoverScreen } from '../screens/RecoverScreen.js';
-import { createTheme, PaletteMode, Theme } from '@mui/material';
+import { Box, CircularProgress, createTheme, PaletteMode, Theme, ThemeProvider, Typography } from '@mui/material';
 import { SocialLoginConfig } from '../screens/types.js';
 import { setAuthSnapshot } from './AuthStore.js';
 import { PasswordChangeScreen } from '../screens/PasswordChangeScreen.js';
+import { handleSocialCode } from '../sso/authService.js';
+import {
+  readSocialCallback,
+  SocialCallback,
+  SOCIAL_PROVIDER_KEY,
+  SOCIAL_REDIRECT_URI_KEY,
+  withoutOAuthReturnParams,
+} from '../sso/socialCallback.js';
+import { getSsoConfig } from '../config/SsoConfig.js';
+import { getInitialThemeMode } from '../utils/themeUtils.js';
 
 
 export type StorageType = 'localStorage' | 'sessionStorage' | 'none';
@@ -61,6 +71,38 @@ function writeToStorage(storage: StorageType, key: string, value: string | null)
     }
   } catch {
     // ambiente sem storage
+  }
+}
+
+/**
+ * Codes já enviados ao SSO nesta página. O code vale uma vez só, e o
+ * StrictMode roda o efeito duas vezes em desenvolvimento: sem isto a segunda
+ * troca falharia e sobrescreveria o resultado da primeira.
+ */
+const exchangedCodes = new Set<string>();
+
+/** O retorno do provedor nesta página, se for um — lido antes do primeiro render. */
+function detectSocialCallback(): SocialCallback | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    return readSocialCallback(window.location.search, {
+      provider: sessionStorage.getItem(SOCIAL_PROVIDER_KEY),
+      redirectUri: sessionStorage.getItem(SOCIAL_REDIRECT_URI_KEY),
+    });
+  } catch {
+    // ambiente sem storage
+    return null;
+  }
+}
+
+/** Encerra o login social: tira o provedor guardado e os parâmetros do retorno da URL. */
+function finishSocialCallback(): void {
+  try {
+    sessionStorage.removeItem(SOCIAL_PROVIDER_KEY);
+    sessionStorage.removeItem(SOCIAL_REDIRECT_URI_KEY);
+    window.history.replaceState(window.history.state, '', withoutOAuthReturnParams(window.location.href));
+  } catch {
+    // ambiente sem storage ou sem history
   }
 }
 
@@ -157,6 +199,48 @@ export function AuthProvider<TAgent = unknown>({
     setRefreshToken(newRefreshToken);
   }, [setToken, setRefreshToken]);
 
+  // Retorno do login social: o provedor devolve a pessoa ao redirect_uri com um
+  // code, e é aqui que ele vira token. Fica no provider, e não na tela de
+  // login, porque um front com loginPage próprio não desenha o LoginScreen —
+  // e foi a biblioteca que guardou o provedor antes de sair, então é ela que
+  // fecha o fluxo. Lido antes do primeiro render para não piscar a tela de login.
+  const [socialCallback] = useState<SocialCallback | null>(() => (token ? null : detectSocialCallback()));
+  const [socialPending, setSocialPending] = useState(socialCallback?.kind === 'code');
+  const [socialError, setSocialError] = useState<string | null>(
+    socialCallback?.kind === 'error' ? socialCallback.message : null
+  );
+
+  useEffect(() => {
+    if (!socialCallback) return;
+    // a URL e o storage saem já, dê certo ou não: o code não serve de novo
+    finishSocialCallback();
+    if (socialCallback.kind !== 'code' || exchangedCodes.has(socialCallback.code)) return;
+    exchangedCodes.add(socialCallback.code);
+
+    (async () => {
+      try {
+        const result = await handleSocialCode<TAgent>({
+          provider: socialCallback.provider,
+          code: socialCallback.code,
+          redirectUri: socialCallback.redirectUri,
+        });
+        if (result.success && result.data?.token) {
+          login(result.data.token, result.data.refreshToken, result.data.agent);
+          // mesmo tratamento do login normal — sai de qualquer rota de auth
+          if (window.location.pathname.startsWith('/auth/')) {
+            window.location.replace('/');
+          }
+        } else {
+          setSocialError(result.message ?? 'error.socialSignFail');
+        }
+      } catch {
+        setSocialError('error.socialSignFail');
+      } finally {
+        setSocialPending(false);
+      }
+    })();
+  }, [socialCallback, login]);
+
   // dentro do componente, após declarar token, refreshToken, onTokenRefreshed, logout
   useEffect(() => {
     setAuthSnapshot({ token, refreshToken, onTokenRefreshed, logout });
@@ -186,6 +270,7 @@ export function AuthProvider<TAgent = unknown>({
 
   const renderContent = (): ReactNode => {
     if (logged || isPublic) return children;
+    if (socialPending) return <SocialCallbackPending theme={appTheme} />;
     if (isRegister && registerPage) return registerPage;
     if (isRegister) return <RegisterScreen 
       loginPath={loginPath} 
@@ -216,6 +301,7 @@ export function AuthProvider<TAgent = unknown>({
       title={appTitle}
       theme={appTheme}
       socialLogins={socialLogins}
+      initialError={socialError ?? undefined}
     />;
 };
 
@@ -223,5 +309,30 @@ export function AuthProvider<TAgent = unknown>({
     <AuthContext.Provider value={value}>
       {renderContent()}
     </AuthContext.Provider>
+  );
+}
+/** O que aparece enquanto o code do provedor é trocado pelo token. */
+function SocialCallbackPending({ theme }: { theme?: Theme }) {
+  const config = getSsoConfig();
+  const translate = config.translater ?? ((key: string) => (key === 'login.socialCompleting' ? 'Signing in...' : key));
+  const resolvedTheme = theme ?? createTheme({ palette: { mode: config.themeMode ?? getInitialThemeMode() } });
+  return (
+    <ThemeProvider theme={resolvedTheme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          bgcolor: 'background.default',
+          color: 'text.primary',
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="body1">{translate('login.socialCompleting')}</Typography>
+      </Box>
+    </ThemeProvider>
   );
 }

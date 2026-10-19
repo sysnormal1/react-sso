@@ -5,6 +5,7 @@ import { Box, Button, CircularProgress, Divider, IconButton, InputAdornment, Lin
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext.js';
 import { login, getSocialLoginUrl } from '../sso/authService.js';
+import { SOCIAL_PROVIDER_KEY, SOCIAL_REDIRECT_URI_KEY } from '../sso/socialCallback.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 import { getInitialThemeMode } from '../utils/themeUtils.js';
 const defaultTexts = {
@@ -23,14 +24,14 @@ const defaultTexts = {
     "error.invalidParameters": "invalid parameters",
     "error.socialSignFail": "Fail on social login"
 };
-export function LoginScreen({ logo, title, theme: clientTheme, slots, ssoUrl, socialLogins, registerPath = '/auth/register', recoverPath = '/auth/recover', onSuccess, onError }) {
+export function LoginScreen({ logo, title, theme: clientTheme, slots, ssoUrl, socialLogins, registerPath = '/auth/register', recoverPath = '/auth/recover', onSuccess, onError, initialError }) {
     const { login: authLogin } = useAuth();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [socialLoading, setSocialLoading] = useState(null);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(initialError ?? null);
     const config = getSsoConfig();
     // detecta tema inicial e reage a mudanças do sistema em tempo real
     const [detectedMode, setDetectedMode] = useState(getInitialThemeMode);
@@ -102,8 +103,8 @@ export function LoginScreen({ logo, title, theme: clientTheme, slots, ssoUrl, so
                 return;
             }
             // passo 2: salvar provider e redirectUri para usar no retorno
-            sessionStorage.setItem('sso_social_provider', social.provider);
-            sessionStorage.setItem('sso_social_redirect_uri', social.redirectUri);
+            sessionStorage.setItem(SOCIAL_PROVIDER_KEY, social.provider);
+            sessionStorage.setItem(SOCIAL_REDIRECT_URI_KEY, social.redirectUri);
             // passo 3: redirecionar
             window.location.href = urlResult.data;
         }

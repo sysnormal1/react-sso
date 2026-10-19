@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext.js';
 import { handleSocialCode } from '../sso/authService.js';
 import { getSsoConfig } from '../config/SsoConfig.js';
 // src/hooks/useSocialLoginCallback.ts
+/**
+ * @deprecated O AuthProvider já troca o code do provedor pelo token, sem o
+ * front fazer nada. Não use junto com ele: o code vale uma vez só, e as duas
+ * trocas disputariam o mesmo code.
+ */
 export function useSocialLoginCallback(ssoUrl) {
     const { login } = useAuth();
     const [loading, setLoading] = useState(true);
