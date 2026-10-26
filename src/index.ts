@@ -14,6 +14,9 @@ export type { SecureFetchCoreParams } from './http/secureFetchCore.js';
 export { secureFetch } from './http/secureFetch.js';
 export type { SecureFetchParams } from './http/secureFetch.js';
 
+export { JsonRowsReader, readJsonRows, deferredJsonBody } from './http/jsonRowsReader.js';
+export type { DeferredJsonBody } from './http/jsonRowsReader.js';
+
 export { useSecureFetch } from './hooks/useSecureFetch.js';
 export type { UseSecureFetchCoreParams } from './hooks/useSecureFetch.js';
 

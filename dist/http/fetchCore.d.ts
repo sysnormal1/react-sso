@@ -14,7 +14,13 @@ export type FetchCoreParams<T = unknown> = {
     headers?: Record<string, string>;
     responseAdapter?: ResponseAdapter<T>;
     useLargeJsonParser?: boolean;
+    /**
+     * When the response is ok, returns its body still in bytes, as a
+     * `DeferredJsonBody` in `data`, without parsing it nor passing it through the
+     * adapter: the caller looks at the size first and then parses it or saves it
+     * as a file. Error responses are parsed as usual.
+     */
+    deferJsonParse?: boolean;
 };
-export declare function largeJsonParse(stringBuffer?: any): any;
 export declare function fetchCore<T = unknown>(params: FetchCoreParams<T>): Promise<FetchCoreResult<T>>;
 //# sourceMappingURL=fetchCore.d.ts.map

@@ -1,6 +1,7 @@
 // src/http/fetchCore.ts
 
 import { responseParser } from "./responseCore.js";
+import { deferredJsonBody } from "./jsonRowsReader.js";
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -24,136 +25,15 @@ export type FetchCoreParams<T = unknown> = {
   headers?: Record<string, string>;
   responseAdapter?: ResponseAdapter<T>;
   useLargeJsonParser?: boolean;
+  /**
+   * When the response is ok, returns its body still in bytes, as a
+   * `DeferredJsonBody` in `data`, without parsing it nor passing it through the
+   * adapter: the caller looks at the size first and then parses it or saves it
+   * as a file. Error responses are parsed as usual.
+   */
+  deferJsonParse?: boolean;
 };
 
-
-export function largeJsonParse(stringBuffer?: any) {
-
-    let result = null;
-
-    if (stringBuffer) {
-
-        let strInit = '"data":[{"DATA":[';
-
-        let startInd = stringBuffer[0].indexOf(strInit);
-
-        if (startInd === -1) {
-
-            strInit = '"data":[';
-
-            startInd = stringBuffer[0].indexOf(strInit);
-        }
-
-        if (startInd > -1) {
-
-            startInd += strInit.length;
-
-            let endInd = -1;
-            let finalInd = -1;
-
-            let previous = null;
-
-            let data = [];
-
-            for (let i: number = 0; i < stringBuffer.length; i++) {
-
-                if (previous != null) {
-                    stringBuffer[i] = previous + stringBuffer[i];
-                    previous = null;
-                }
-
-                if (i !== 0) {
-                    startInd = stringBuffer[i].indexOf("{");
-                }
-
-                if (startInd > -1) {
-
-                    endInd = stringBuffer[i].lastIndexOf("}");
-
-                    finalInd = stringBuffer[i].indexOf("]");
-
-                    if (finalInd > -1) {
-                        endInd = stringBuffer[i].lastIndexOf("}", finalInd);
-                    }
-
-                    if (endInd > -1) {
-
-                        let stringBufferData =
-                            stringBuffer[i].slice(startInd + 1, endInd);
-
-                        previous =
-                            stringBuffer[i].slice(endInd + 1);
-
-                        let arrayBufferData =
-                            stringBufferData.split("},{");
-
-                        for (let j = 0; j < arrayBufferData.length; j++) {
-
-                            data.push(
-                                JSON.parse(
-                                    '{' + arrayBufferData[j] + '}'
-                                )
-                            );
-                        }
-
-                    } else {
-
-                        previous = stringBuffer[i];
-                        stringBuffer[i] = null;
-                    }
-
-                } else {
-
-                    previous = stringBuffer[i];
-                    stringBuffer[i] = null;
-                }
-
-                if (i === 0) {
-
-                    stringBuffer[i] =
-                        stringBuffer[i].slice(0, startInd) +
-                        '"__DATA__"' +
-                        (finalInd > -1
-                            ? stringBuffer[i].slice(finalInd)
-                            : "");
-
-                } else {
-
-                    if (finalInd > -1) {
-
-                        stringBuffer[i] =
-                            stringBuffer[i].slice(finalInd);
-
-                    } else {
-
-                        stringBuffer[i] = null;
-                    }
-                }
-
-                if (finalInd > -1) break;
-            }
-
-            stringBuffer = stringBuffer.join('');
-
-            result = JSON.parse(stringBuffer);
-
-            if (result.data[0] === "__DATA__") {
-
-                result.data = data;
-
-            } else {
-
-                result.data[0].DATA = data;
-            }
-
-        } else {
-
-            result = JSON.parse(stringBuffer.join(''));
-        }
-    }
-
-    return result;
-}
 
 export async function fetchCore<T = unknown>(
   params: FetchCoreParams<T>
@@ -165,7 +45,8 @@ export async function fetchCore<T = unknown>(
     body,
     headers: extraHeaders,
     responseAdapter,
-    useLargeJsonParser = false
+    useLargeJsonParser = false,
+    deferJsonParse = false
   } = params;
 
   const headers: Record<string, string> = {
@@ -184,6 +65,14 @@ export async function fetchCore<T = unknown>(
     body: body !== undefined ? (typeof body === "object" ? JSON.stringify(body) : body) : undefined as any,
   });
   
+  if (deferJsonParse && response.ok) {
+    return {
+      success: true,
+      status: response.status,
+      data: deferredJsonBody(await response.blob()) as T,
+    };
+  }
+
   const raw: any = await responseParser(response, useLargeJsonParser);
 
   if (responseAdapter) {

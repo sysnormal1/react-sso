@@ -5,6 +5,7 @@ export { ssoConfig, getSsoConfig } from './config/SsoConfig.js';
 export { fetchCore } from './http/fetchCore.js';
 export { secureFetchCore } from './http/secureFetchCore.js';
 export { secureFetch } from './http/secureFetch.js';
+export { JsonRowsReader, readJsonRows, deferredJsonBody } from './http/jsonRowsReader.js';
 export { useSecureFetch } from './hooks/useSecureFetch.js';
 // adapters
 export { defaultDataSwapAdapter } from './adapters/defaultDataSwapAdapter.js';
